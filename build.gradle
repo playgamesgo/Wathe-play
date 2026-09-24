@@ -1,6 +1,6 @@
 plugins {
-	id 'fabric-loom' version '1.13-SNAPSHOT'
-	id "io.github.ladysnake.chenille" version "0.14.0"
+	id 'fabric-loom' version '1.17-SNAPSHOT'
+	id 'maven-publish'
 }
 
 version = project.mod_version
@@ -8,14 +8,6 @@ group = project.maven_group
 
 base {
 	archivesName = project.archives_base_name
-}
-
-chenille {
-	configurePublishing {
-		withLadysnakeMaven()
-		withGithubRelease()
-		withModrinthRelease()
-	}
 }
 
 repositories {
@@ -33,6 +25,11 @@ repositories {
         url "https://maven.terraformersmc.com/releases/"
         name "Mod Menu"
     }
+
+	maven {
+		name = "playgamesgo"
+		url = "https://repo.playgamesgo.me/"
+	}
 
 	// CCA, Ratatouille
 	maven {
@@ -72,7 +69,7 @@ dependencies {
 
 	// Libraries
 	// Ratatouille
-	modIncludeImplementation "dev.upcraft.datasync:datasync-minecraft-${project.minecraft_version}-fabric:${project.datasync_version}"
+	modImplementation include("dev.upcraft.datasync:datasync-minecraft-${project.minecraft_version}-fabric:${project.datasync_version}")
 	modImplementation "dev.doctor4t:ratatouille:${project.ratatouille_version}"
 	// CCA
 	modImplementation include ("org.ladysnake.cardinal-components-api:cardinal-components-base:${project.cca_version}")
@@ -80,10 +77,10 @@ dependencies {
 	modImplementation include ("org.ladysnake.cardinal-components-api:cardinal-components-entity:${project.cca_version}")
 	modImplementation include ("org.ladysnake.cardinal-components-api:cardinal-components-scoreboard:${project.cca_version}")
 	// Midnightlib
-	modIncludeImplementation "maven.modrinth:midnightlib:${project.midnightlib_version}"
+	modImplementation include("maven.modrinth:midnightlib:${project.midnightlib_version}")
 
 	// Runtime mods
-	modLocalImplementation "com.terraformersmc:modmenu:${mod_menu_version}"
+	modCompileOnly modLocalRuntime ("com.terraformersmc:modmenu:${mod_menu_version}")
 
 	modImplementation "de.maxhenkel.voicechat:voicechat-api:${voicechat_api_version}"
 	modRuntimeOnly "maven.modrinth:simple-voice-chat:fabric-${voicechat_version}"
@@ -119,5 +116,25 @@ java {
 jar {
 	from("LICENSE") {
 		rename { "${it}_${project.base.archivesName.get()}"}
+	}
+}
+
+publishing {
+	publications {
+		create("mavenJava", MavenPublication) {
+			artifactId = project.archives_base_name
+			from components.java
+		}
+	}
+
+	repositories {
+		maven {
+			name = "r2"
+			url = uri("https://repo.playgamesgo.me/")
+			credentials {
+				username = providers.gradleProperty("r2RepoUser").getOrElse(System.getenv("R2_REPO_USER") ?: "")
+				password = providers.gradleProperty("r2RepoPassword").getOrElse(System.getenv("R2_REPO_PASSWORD") ?: "")
+			}
+		}
 	}
 }
